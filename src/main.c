@@ -15,15 +15,16 @@
    limitations under the License.
 */
 
-#if !defined(__LINUX__)
-#include <windows.h>
-#endif
+// Uncomment on Windows
+//#include <windows.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
+/* Non-Standard Libraries */
+#include <libguile.h>
 #include <GL/freeglut.h>
 
 int stats=0;
@@ -47,8 +48,12 @@ Creature creature = {
     .hunger = 100,
 };
 
+/* internal functions */
 void eat();
+void keyboard(unsigned char, int, int);
 void move();
+void respire();
+void setPerspective();
 
 void
 keyboard(unsigned char key, int x, int y)
@@ -83,9 +88,11 @@ setPerspective()
 void
 draw()
 {
-    if (glutGet(GLUT_ELAPSED_TIME)-start>1000/60.0) {
+    if (glutGet(GLUT_ELAPSED_TIME)-start>1000/20.0) {
+        start = glutGet(GLUT_ELAPSED_TIME);
         eat();
         move();
+        respire();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glColor3f(1.0, 0.0, 0.0);
         int i;
@@ -99,22 +106,38 @@ draw()
         }
         glColor3f(0.0, 0.2, 1.0);
         glBegin(GL_QUADS);
-            glVertex3f(creature.posx+creature.width, creature.posy+0.0, -1.0);
-            glVertex3f(creature.posx+creature.width, creature.posy+creature.height, -1.0);
-            glVertex3f(creature.posx+0.0, creature.posy+creature.height, -1.0);
-            glVertex3f(creature.posx+0.0, creature.posy+0.0, -1.0);
+            glVertex3f(creature.posx+creature.width, creature.posy+0.0, 0.0);
+            glVertex3f(creature.posx+creature.width, creature.posy+creature.height, 0.0);
+            glVertex3f(creature.posx+0.0, creature.posy+creature.height, 0.0);
+            glVertex3f(creature.posx+0.0, creature.posy+0.0, 0.0);
         glEnd();
         
         glutSwapBuffers();
-        start = glutGet(GLUT_ELAPSED_TIME);
     }
+}
+
+void
+respire()
+{
+    
 }
 
 void
 eat()
 {
     /* Detects if food inside creature then removes it if necessary. */
-    
+    int i;
+    for (i=0; i<100; i++) {
+        if (  (creature.posx                    < food[2*i+0])
+            &&(creature.posx+creature.width-10  > food[2*i+0])
+            &&(creature.posy                    < food[2*i+1])
+            &&(creature.posy+creature.height-10 > food[2*i+1])) {
+            /* HACKS */
+            creature.hunger++;
+            food[2*i+0] = -10;
+            food[2*i+1] = -10;
+        }
+    }
 }
 
 void
@@ -149,7 +172,7 @@ main (int argc, char ** argv)
     glutInitWindowSize(640, 480);
     glutInitWindowPosition(100, 100);
 
-    glutCreateWindow("Tropism 0.0.1");
+    glutCreateWindow("Tropism 0.0.2");
     srand((unsigned) time(&t));
     glEnable(GL_DEPTH_TEST);
     setPerspective();

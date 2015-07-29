@@ -1,0 +1,11 @@
+
+
+Building on Debian
+------------------
+
+$ su
+$ apt-get install build-essential freeglut3-dev guile-2.0 guile-2.0-libs
+$ make
+$ make install
+
+
