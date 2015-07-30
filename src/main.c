@@ -37,7 +37,8 @@ typedef struct CREATURE {
     int posy;
     int width;
     int height;
-    int hunger;
+    int energy;
+    int collided[4]; /* {top, right, bottom, left} */
 } Creature;
 
 Creature creature = {
@@ -45,10 +46,11 @@ Creature creature = {
     .posy = 100,
     .width = 40,
     .height = 40,
-    .hunger = 100,
+    .energy = 1000,
 };
 
 /* internal functions */
+void collision();
 void eat();
 void keyboard(unsigned char, int, int);
 void move();
@@ -119,7 +121,8 @@ draw()
 void
 respire()
 {
-    
+    creature.energy--;
+    if (creature.energy<0) exit(EXIT_SUCCESS);
 }
 
 void
@@ -133,7 +136,7 @@ eat()
             &&(creature.posy                    < food[2*i+1])
             &&(creature.posy+creature.height-10 > food[2*i+1])) {
             /* HACKS */
-            creature.hunger++;
+            creature.energy+=10;
             food[2*i+0] = -10;
             food[2*i+1] = -10;
         }
@@ -144,7 +147,24 @@ void
 move()
 {
     /* AI part */
-    creature.posx+=1.0;
+    int multiplier;
+    int dir = rand()%4;
+    if (creature.energy < 500) multiplier = 10;
+    else multiplier = 1;
+    switch (dir) {
+        case 0: creature.posx+=1.0*multiplier; break;
+        case 1: creature.posy+=1.0*multiplier; break;
+        case 2: creature.posx-=1.0*multiplier; break;
+        case 3: creature.posy-=1.0*multiplier; break;
+    }
+    collision();
+    if (creature.collided[0]+creature.collided[1]+creature.collided[2]+creature.collided[3])
+      switch (dir) {
+        case 0: creature.posx-=1.0*multiplier; break;
+        case 1: creature.posy-=1.0*multiplier; break;
+        case 2: creature.posx+=1.0*multiplier; break;
+        case 3: creature.posy+=1.0*multiplier; break;
+    }   
 }
 
 void
@@ -160,7 +180,20 @@ generateFood()
 void
 spawnCreature()
 {
-    
+
+}
+
+void
+collision()
+{
+    if (creature.posx<0) creature.collided[3] = 1;
+    else creature.collided[3] = 0;
+    if (creature.posy<0) creature.collided[0] = 1;
+    else creature.collided[0] = 0;
+    if (creature.posx+creature.width>640) creature.collided[1] = 1;
+    else creature.collided[1] = 0;
+    if (creature.posy+creature.height>480) creature.collided[2] = 1;
+    else creature.collided[2] = 0;
 }
 
 int
@@ -184,6 +217,7 @@ main (int argc, char ** argv)
     spawnCreature();
     
     glutMainLoop();
+    
     return 0;
 }
 
